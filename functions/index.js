@@ -20,10 +20,12 @@ exports.onupdateproduct = onDocumentUpdated("productos/{id}", async ( event ) =>
   const precio = newValue.precio;
   const nombreNegocio = newValue.nombreNegocio;
   const users = db.collection("users");
+  //const tokens = db.collection("FCMtokens").where("email", '==',)
   const querySnapshot = await users.get();
 
   if(querySnapshot.size) {
     querySnapshot.forEach( (doc) => {
+      const email = doc.data().email;
       //token = doc.data().token;
       doc.data().favorites_negocios.forEach( (f) => {
         if(idnegocio == f.idnegocio ){
@@ -32,9 +34,16 @@ exports.onupdateproduct = onDocumentUpdated("productos/{id}", async ( event ) =>
             notification: {
               title: "Actualización de Producto",
               body: `${nombreNegocio.toUpperCase()} ha actualizado un producto: ${descripcion.toUpperCase()} `,
+              content_available: true,
+              mutable_content: true,
+              priority: 'high'
               // sound: "default",
             },
-            token: token
+            token: token,
+
+            // data: {
+            //   idproducto: newValue.data.after.data().id
+            // }
           
           };
  
