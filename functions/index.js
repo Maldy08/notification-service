@@ -173,11 +173,11 @@ exports.onucreatepromocion = onDocumentCreated("promociones/{id}", async (event)
                   // sound: "default",
                 },
 
-                android: {
-                  notification: {
-                    imageUrl: imageUrl
-                  }
-                },
+                // android: {
+                //   notification: {
+                //     imageUrl: imageUrl != "" ? imageUrl : ""
+                //   }
+                // },
 
                 apns: {
                   payload: {
@@ -241,11 +241,11 @@ exports.onupdatepromocion = onDocumentUpdated("promociones/{id}", async (event) 
                   body: `${nombreNegocio.toUpperCase()} ha actualizado una promoción: ${descripcion.toUpperCase()} `,
                   // sound: "default",
                 },
-                android: {
-                  notification: {
-                    imageUrl: imageUrl
-                  }
-                },
+                // android: {
+                //   notification: {
+                //     imageUrl: imageUrl
+                //   }
+                // },
 
                 apns: {
                   payload: {
@@ -313,11 +313,11 @@ exports.oncreatecupon = onDocumentCreated("cupones/{id}", async (event) => {
                   body: `${nombreNegocio.toUpperCase()} ha dado de alta un cupon: ${descripcion.toUpperCase()} `,
                   // sound: "default",
                 },
-                android: {
-                  notification: {
-                    imageUrl: imageUrl
-                  }
-                },
+                // android: {
+                //   notification: {
+                //     imageUrl: imageUrl
+                //   }
+                // },
 
                 apns: {
                   payload: {
@@ -381,11 +381,11 @@ exports.onupdatecupon = onDocumentUpdated("cupones/{id}", async (event) => {
                   body: `${nombreNegocio.toUpperCase()} ha actualizado un cupon: ${descripcion.toUpperCase()} `,
                   // sound: "default",
                 },
-                android: {
-                  notification: {
-                    imageUrl: imageUrl
-                  }
-                },
+                // android: {
+                //   notification: {
+                //     imageUrl: imageUrl
+                //   }
+                // },
 
                 apns: {
                   payload: {
