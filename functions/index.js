@@ -11,48 +11,66 @@ initializeApp();
 const db = getFirestore(); 
 
 // const token = "c_6cINyB2kI9hw8VeZi5jE:APA91bHgC3UVaVmqk9jVOF8fAZwDN5XwEaPUMeXVzyD2LG72zZtD2red23p4HWGDp0rqExpQB6eLufCCHlM9A3k-PSivyerZvB2H936O_ErCY794UxBQTplBjvqoZVHA1T7INlmwd47G";
-const token ='fLS6n6pdRZOGhhBe4aQeHY:APA91bHjW78RvDZn86Q_zp3zwsJ8wDxlhXi_lUTeFiQlE2MU9GE8hFUEqBcCvdUdDzXeanAjgU89v9Xu3QNaCwLgRIyPywDy2is2j5W9-Wm8PwEben3i_OrpHxwS7zwy57AyKZOGrclN';
+//const token ='fLS6n6pdRZOGhhBe4aQeHY:APA91bHjW78RvDZn86Q_zp3zwsJ8wDxlhXi_lUTeFiQlE2MU9GE8hFUEqBcCvdUdDzXeanAjgU89v9Xu3QNaCwLgRIyPywDy2is2j5W9-Wm8PwEben3i_OrpHxwS7zwy57AyKZOGrclN';
 
 exports.onupdateproduct = onDocumentUpdated("productos/{id}", async ( event ) => {
   const newValue = event.data.after.data();
   const idnegocio = newValue.id_negocio;
+  const idproducto = newValue.id;
   const descripcion = newValue.descripcion;
   const precio = newValue.precio;
   const nombreNegocio = newValue.nombreNegocio;
+  const imageUrl = newValue.photoUrl;
   const users = db.collection("users");
-  //const tokens = db.collection("FCMtokens").where("email", '==',)
-  const querySnapshot = await users.get();
+  const tokens = db.collection("FCMtokens");
+  const queryUsers = await users.get();
+  const queryTokens = await tokens.get();
 
-  if(querySnapshot.size) {
-    querySnapshot.forEach( (doc) => {
-      const email = doc.data().email;
-      //token = doc.data().token;
+  if(queryUsers.size) {
+    queryUsers.forEach( (doc) => {
       doc.data().favorites_negocios.forEach( (f) => {
         if(idnegocio == f.idnegocio ){
-          const payload = 
-          {
-            notification: {
-              title: "Actualización de Producto",
-              body: `${nombreNegocio.toUpperCase()} ha actualizado un producto: ${descripcion.toUpperCase()} `,
-              content_available: true,
-              mutable_content: true,
-              priority: 'high'
-              // sound: "default",
-            },
-            token: token,
+          queryTokens.forEach( (token ) => {
+            if(token.data().email == doc.data().email) {
+              const payload = 
+              {
+                notification: {
+                  title: "Actualización de Producto",
+                  body: `${nombreNegocio.toUpperCase()} ha actualizado un producto: ${descripcion.toUpperCase()} `,
+                  // sound: "default",
+                },
 
-            // data: {
-            //   idproducto: newValue.data.after.data().id
-            // }
-          
-          };
- 
-          messaging().send(payload).then((response) => {
-            // Response is a message ID string.
-            logger.log('Successfully sent message:', response);
-          })
-          .catch((error) => {
-            logger.log('Error sending message:', error);
+                android: {
+                  notification: {
+                    imageUrl: imageUrl
+                  }
+                },
+
+                apns: {
+                  payload: {
+                    aps: {
+                      'content_available': true,
+                      'mutable_content': true,
+                    }
+                  }
+                },
+
+                data:{
+                    idproducto: idproducto
+                },
+                token: token.data().token,
+  
+              };
+              messaging().send(payload).then((response) => {
+                // Response is a message ID string.
+                logger.log('Successfully sent message:', response);
+              })
+              .catch((error) => {
+                logger.log('Error sending message:', error);
+              });
+    
+
+            }
           });
        }
       });
@@ -64,32 +82,57 @@ exports.oncreateproduct = onDocumentCreated("productos/{id}", async (event) => {
   const snapshot = event.data;
   const data = snapshot.data();
   const idnegocio = data.id_negocio;
+  const idproducto = data.id;
   const nombreNegocio = data.nombreNegocio;
   const descripcion = data.descripcion;
+  const imageUrl = data.photoUrl;
   const users = db.collection("users");
-  //const q1 = users.where("email","==","camv29@gmail.com");
+  const tokens = db.collection("FCMtokens");
+  const queryTokens = await tokens.get();
   const querySnapshot = await users.get();
   if(querySnapshot.size) {
     querySnapshot.forEach( (doc) => {
       doc.data().favorites_negocios.forEach( (f) => {
         if(idnegocio == f.idnegocio ){
            //mandar notificacionpush
-           const payload = {
-            notification: {
-              title: "Nuevo Producto",
-              body: `${nombreNegocio.toUpperCase()} ha dado de alta un nuevo producto: ${descripcion.toUpperCase()} `,
-              // sound: "default",
-            },
-            token: token
-          
-          };
-          messaging().send(payload).then((response) => {
-            // Response is a message ID string.
-            logger.log('Successfully sent message:', response);
-          })
-          .catch((error) => {
-            logger.log('Error sending message:', error);
-          });
+           queryTokens.forEach( (token) => {
+            if( token.data().email == doc.data().email) {
+
+              const payload = {
+                notification: {
+                  title: "Nuevo Producto",
+                  body: `${nombreNegocio.toUpperCase()} ha dado de alta un nuevo producto: ${descripcion.toUpperCase()} `,
+                  // sound: "default",
+                },
+                android: {
+                  notification: {
+                    imageUrl: imageUrl
+                  }
+                },
+
+                apns: {
+                  payload: {
+                    aps: {
+                      'content_available': true,
+                      'mutable_content': true,
+                    }
+                  }
+                },
+                data:{
+                  idproducto: idproducto
+                },
+                token: token.data().token,
+              
+              };
+              messaging().send(payload).then((response) => {
+                // Response is a message ID string.
+                logger.log('Successfully sent message:', response);
+              })
+              .catch((error) => {
+                logger.log('Error sending message:', error);
+              });
+            }
+           })
         }
       });
     });
@@ -101,8 +144,12 @@ exports.onucreatepromocion = onDocumentCreated("promociones/{id}", async (event)
   const data = snapshot.data();
   const idnegocio = data.id_negocio;
   const descripcion = data.descripcion;
+  const imageUrl = data.photoUrl;
+  const idpromocion = data.id;
   const users = db.collection("users");
   const negocio = db.collection("negocios").where("id", "==", idnegocio);
+  const tokens = db.collection("FCMtokens");
+  const queryTokens = await tokens.get();
   const querySnapshotNegocio = await negocio.get();
   let nombreNegocio = "";
   if(querySnapshotNegocio.size) {
@@ -116,21 +163,45 @@ exports.onucreatepromocion = onDocumentCreated("promociones/{id}", async (event)
     querySnapshot.forEach( (doc) => {
       doc.data().favorites_negocios.forEach( (f) => {
         if(idnegocio == f.idnegocio ){
-           const payload = {
-            notification: {
-              title: "Nueva Promocion",
-              body: `${nombreNegocio.toUpperCase()} ha dado de alta una promocion: ${descripcion.toUpperCase()} `,
-              // sound: "default",
-            },
-            token: token
-          
-          };
-          messaging().send(payload).then((response) => {
-            // Response is a message ID string.
-            logger.log('Successfully sent message:', response);
-          })
-          .catch((error) => {
-            logger.log('Error sending message:', error);
+
+          queryTokens.forEach( (token) => {
+            if( token.data().email == doc.data().email) { 
+              const payload = {
+                notification: {
+                  title: "Nueva Promocion",
+                  body: `${nombreNegocio.toUpperCase()} ha dado de alta una promocion: ${descripcion.toUpperCase()} `,
+                  // sound: "default",
+                },
+
+                android: {
+                  notification: {
+                    imageUrl: imageUrl
+                  }
+                },
+
+                apns: {
+                  payload: {
+                    aps: {
+                      'content_available': true,
+                      'mutable_content': true,
+                    }
+                  }
+                },
+                data:{
+                  idpromocion: idpromocion
+                },
+                token: token.data().token,
+              
+              };
+              messaging().send(payload).then((response) => {
+                // Response is a message ID string.
+                logger.log('Successfully sent message:', response);
+              })
+              .catch((error) => {
+                logger.log('Error sending message:', error);
+              });
+
+            }
           });
         }
       });
@@ -142,11 +213,16 @@ exports.onupdatepromocion = onDocumentUpdated("promociones/{id}", async (event) 
   const newValue = event.data.after.data();
   const idnegocio = newValue.id_negocio;
   const descripcion = newValue.descripcion;
+  const idpromocion = newValue.id;
+  const imageUrl = newValue.imageUrl;
   let nombreNegocio = '';
   const users = db.collection("users");
   const querySnapshot = await users.get();
   const negocio = db.collection("negocios").where("id", "==", idnegocio);
   const querySnapshotNegocio = await negocio.get();
+  const tokens = db.collection("FCMtokens");
+  const queryTokens = await tokens.get();
+
   if(querySnapshotNegocio.size) {
     querySnapshotNegocio.forEach( (f) => {
       nombreNegocio = f.data().nombre_empresa;
@@ -157,22 +233,45 @@ exports.onupdatepromocion = onDocumentUpdated("promociones/{id}", async (event) 
     querySnapshot.forEach( (doc) => {
       doc.data().favorites_negocios.forEach( (f) => {
         if(idnegocio == f.idnegocio ) {
-          const payload = {
-           notification: {
-             title: "Actualización de Promoción",
-             body: `${nombreNegocio.toUpperCase()} ha actualizado una promoción: ${descripcion.toUpperCase()} `,
-             // sound: "default",
-           },
-           token: token
-         
-         };
-         messaging().send(payload).then((response) => {
-           // Response is a message ID string.
-           logger.log('Successfully sent message:', response);
-         })
-         .catch((error) => {
-           logger.log('Error sending message:', error);
-         });
+          queryTokens.forEach( ( token ) => {
+            if(doc.data().email == token.data().email ) {
+              const payload = {
+                notification: {
+                  title: "Actualización de Promoción",
+                  body: `${nombreNegocio.toUpperCase()} ha actualizado una promoción: ${descripcion.toUpperCase()} `,
+                  // sound: "default",
+                },
+                android: {
+                  notification: {
+                    imageUrl: imageUrl
+                  }
+                },
+
+                apns: {
+                  payload: {
+                    aps: {
+                      'content_available': true,
+                      'mutable_content': true,
+                    }
+                  }
+                },
+                data:{
+                  idpromocion: idpromocion
+                },
+                token: token.data().token,
+              
+              };
+              messaging().send(payload).then((response) => {
+                // Response is a message ID string.
+                logger.log('Successfully sent message:', response);
+              })
+              .catch((error) => {
+                logger.log('Error sending message:', error);
+              });
+            }
+          })
+
+
        }
       });
     });
@@ -182,11 +281,17 @@ exports.onupdatepromocion = onDocumentUpdated("promociones/{id}", async (event) 
 exports.oncreatecupon = onDocumentCreated("cupones/{id}", async (event) => {
   const snapshot = event.data;
   const data = snapshot.data();
+  const idcupon = data.id;
   const idnegocio = data.id_negocio;
   const descripcion = data.descripcion;
+  const imageUrl = data.imageUrl;
+
   const users = db.collection("users");
   const negocio = db.collection("negocios").where("id", "==", idnegocio);
   const querySnapshotNegocio = await negocio.get();
+  const tokens = db.collection("FCMtokens");
+  const queryTokens = await tokens.get();
+
   let nombreNegocio = "";
   if(querySnapshotNegocio.size) {
     querySnapshotNegocio.forEach( (f) => {
@@ -199,37 +304,65 @@ exports.oncreatecupon = onDocumentCreated("cupones/{id}", async (event) => {
     querySnapshot.forEach( (doc) => {
       doc.data().favorites_negocios.forEach( (f) => {
         if(idnegocio == f.idnegocio ){
-           const payload = {
-            notification: {
-              title: "Nuevo Cupon",
-              body: `${nombreNegocio.toUpperCase()} ha dado de alta un cupon: ${descripcion.toUpperCase()} `,
-              // sound: "default",
-            },
-            token: token
-          
-          };
-          messaging().send(payload).then((response) => {
-            // Response is a message ID string.
-            logger.log('Successfully sent message:', response);
-          })
-          .catch((error) => {
-            logger.log('Error sending message:', error);
+          queryTokens.forEach( (token) => {
+            if(doc.data().email == token.data().email ) { 
+
+              const payload = {
+                notification: {
+                  title: "Nuevo Cupon",
+                  body: `${nombreNegocio.toUpperCase()} ha dado de alta un cupon: ${descripcion.toUpperCase()} `,
+                  // sound: "default",
+                },
+                android: {
+                  notification: {
+                    imageUrl: imageUrl
+                  }
+                },
+
+                apns: {
+                  payload: {
+                    aps: {
+                      'content_available': true,
+                      'mutable_content': true,
+                    }
+                  }
+                },
+                data:{
+                  idcupon: idcupon
+                },
+                token: token.data().token
+              
+              };
+              messaging().send(payload).then((response) => {
+                // Response is a message ID string.
+                logger.log('Successfully sent message:', response);
+              })
+              .catch((error) => {
+                logger.log('Error sending message:', error);
+              });
+            }
           });
+
         }
       });
     });
   }
 });
 
-exports.onupdatecupon = onDocumentUpdated("cupon/{id}", async (event) => {
+exports.onupdatecupon = onDocumentUpdated("cupones/{id}", async (event) => {
   const newValue = event.data.after.data();
   const idnegocio = newValue.id_negocio;
   const descripcion = newValue.descripcion;
+  const idcupon = newValue.id;
+  const imageUrl = newValue.imageUrl; 
   let nombreNegocio = '';
   const users = db.collection("users");
   const querySnapshot = await users.get();
   const negocio = db.collection("negocios").where("id", "==", idnegocio);
   const querySnapshotNegocio = await negocio.get();
+  const tokens = db.collection("FCMtokens");
+  const queryTokens = await tokens.get();
+
   if(querySnapshotNegocio.size) {
     querySnapshotNegocio.forEach( (f) => {
       nombreNegocio = f.data().nombre_empresa;
@@ -240,22 +373,44 @@ exports.onupdatecupon = onDocumentUpdated("cupon/{id}", async (event) => {
     querySnapshot.forEach( (doc) => {
       doc.data().favorites_negocios.forEach( (f) => {
         if(idnegocio == f.idnegocio ) {
-          const payload = {
-           notification: {
-             title: "Actualización de Cupon",
-             body: `${nombreNegocio.toUpperCase()} ha actualizado un cupon: ${descripcion.toUpperCase()} `,
-             // sound: "default",
-           },
-           token: token
-         
-         };
-         messaging().send(payload).then((response) => {
-           // Response is a message ID string.
-           logger.log('Successfully sent message:', response);
-         })
-         .catch((error) => {
-           logger.log('Error sending message:', error);
-         });
+          queryTokens.forEach( (token) => {
+            if(doc.data().email == token.data().email ) {  
+              const payload = {
+                notification: {
+                  title: "Actualización de Cupon",
+                  body: `${nombreNegocio.toUpperCase()} ha actualizado un cupon: ${descripcion.toUpperCase()} `,
+                  // sound: "default",
+                },
+                android: {
+                  notification: {
+                    imageUrl: imageUrl
+                  }
+                },
+
+                apns: {
+                  payload: {
+                    aps: {
+                      'content_available': true,
+                      'mutable_content': true,
+                    }
+                  }
+                },
+                data:{
+                  idcupon: idcupon
+                },
+                token: token.data().token,
+              
+              };
+              messaging().send(payload).then((response) => {
+                // Response is a message ID string.
+                logger.log('Successfully sent message:', response);
+              })
+              .catch((error) => {
+                logger.log('Error sending message:', error);
+              });
+            }
+
+          });
        }
       });
     });
