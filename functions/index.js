@@ -214,7 +214,7 @@ exports.onupdatepromocion = onDocumentUpdated("promociones/{id}", async (event) 
   const idnegocio = newValue.id_negocio;
   const descripcion = newValue.descripcion;
   const idpromocion = newValue.id;
-  const imageUrl = newValue.imageUrl;
+  const imageUrl = newValue.photoUrl;
   let nombreNegocio = '';
   const users = db.collection("users");
   const querySnapshot = await users.get();
@@ -284,7 +284,7 @@ exports.oncreatecupon = onDocumentCreated("cupones/{id}", async (event) => {
   const idcupon = data.id;
   const idnegocio = data.id_negocio;
   const descripcion = data.descripcion;
-  const imageUrl = data.imageUrl;
+  const imageUrl = data.photoUrl;
 
   const users = db.collection("users");
   const negocio = db.collection("negocios").where("id", "==", idnegocio);
@@ -354,7 +354,7 @@ exports.onupdatecupon = onDocumentUpdated("cupones/{id}", async (event) => {
   const idnegocio = newValue.id_negocio;
   const descripcion = newValue.descripcion;
   const idcupon = newValue.id;
-  const imageUrl = newValue.imageUrl; 
+  const imageUrl = newValue.photoUrl; 
   let nombreNegocio = '';
   const users = db.collection("users");
   const querySnapshot = await users.get();
