@@ -6,12 +6,24 @@ setGlobalOptions({maxInstances:10});
 const {initializeApp} = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { messaging } = require("firebase-admin");
+const { onRequest } = require("firebase-functions/v2/https");
 
 initializeApp();
 const db = getFirestore(); 
+const targetUrl = 'https://enofferta-app.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=DjAAEWG_vPTb2guXfOtLX5EFL849WOj8f60aUF3JEz0AAAGPCVbO2w&apiKey=AIzaSyBsbD_CrQIiAalLlvDlO2KDOuptxQ7iUG0&lang=es-419'
 
 // const token = "c_6cINyB2kI9hw8VeZi5jE:APA91bHgC3UVaVmqk9jVOF8fAZwDN5XwEaPUMeXVzyD2LG72zZtD2red23p4HWGDp0rqExpQB6eLufCCHlM9A3k-PSivyerZvB2H936O_ErCY794UxBQTplBjvqoZVHA1T7INlmwd47G";
 //const token ='fLS6n6pdRZOGhhBe4aQeHY:APA91bHjW78RvDZn86Q_zp3zwsJ8wDxlhXi_lUTeFiQlE2MU9GE8hFUEqBcCvdUdDzXeanAjgU89v9Xu3QNaCwLgRIyPywDy2is2j5W9-Wm8PwEben3i_OrpHxwS7zwy57AyKZOGrclN';
+
+exports.onresetpassword = onRequest( async (req, res) => {
+
+    const newUrl = new URL(targetUrl);
+    const oobCode = req.query.oobCode;
+    newUrl.searchParams.set("oobCode", oobCode);
+
+  }
+);
+
 
 exports.onupdateproduct = onDocumentUpdated("productos/{id}", async ( event ) => {
   const newValue = event.data.after.data();
